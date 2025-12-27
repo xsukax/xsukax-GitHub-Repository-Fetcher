@@ -6,22 +6,42 @@
     <title>xsukax GitHub Repository Fetcher</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary-color: #2d333b; --secondary-color: #22272e; --accent-color: #238636; --text-color: #cdd9e5; --border-color: #444c56; --card-bg: #1c2128; --input-bg: #22272e; }
+        :root { --primary-color: #2d333b; --secondary-color: #22272e; --accent-color: #238636; --text-color: #cdd9e5; --border-color: #444c56; --card-bg: #1c2128; --input-bg: #22272e; --danger-color: #f85149; --warning-color: #d29922; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; }
         body { background-color: var(--primary-color); color: var(--text-color); line-height: 1.6; padding: 20px; min-height: 100vh; }
         .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
         header { text-align: center; margin-bottom: 40px; padding-top: 20px; }
         h1 { font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(135deg, #58a6ff, #238636); -webkit-background-clip: text; background-clip: text; color: transparent; }
         .subtitle { color: #8b949e; font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+        .rate-limit-card { background-color: var(--secondary-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-color); }
+        .rate-limit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .rate-limit-header h3 { font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .rate-limit-badge { background-color: #373e47; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: normal; }
+        .rate-limit-badge.good { background-color: rgba(46, 160, 67, 0.2); color: #2ea043; border: 1px solid rgba(46, 160, 67, 0.4); }
+        .rate-limit-badge.warning { background-color: rgba(210, 153, 34, 0.2); color: #d29922; border: 1px solid rgba(210, 153, 34, 0.4); }
+        .rate-limit-badge.danger { background-color: rgba(248, 81, 73, 0.2); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.4); }
+        .rate-limit-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .rate-limit-stat { background-color: var(--input-bg); padding: 12px; border-radius: 8px; text-align: center; }
+        .rate-limit-stat .label { font-size: 0.85rem; color: #8b949e; margin-bottom: 5px; }
+        .rate-limit-stat .value { font-size: 1.5rem; font-weight: 600; color: var(--text-color); }
+        .rate-limit-stat .value.danger { color: var(--danger-color); }
+        .rate-limit-stat .value.warning { color: var(--warning-color); }
+        .rate-limit-stat .value.good { color: #2ea043; }
+        .progress-bar { width: 100%; height: 8px; background-color: var(--input-bg); border-radius: 4px; overflow: hidden; margin-top: 15px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #238636, #2ea043); transition: width 0.3s ease; }
+        .progress-fill.warning { background: linear-gradient(90deg, #d29922, #f0883e); }
+        .progress-fill.danger { background: linear-gradient(90deg, #f85149, #da3633); }
+        .reset-info { margin-top: 10px; font-size: 0.85rem; color: #8b949e; text-align: center; }
         .app-container { background-color: var(--secondary-color); border-radius: 12px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); }
         .input-section { margin-bottom: 30px; }
         .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
         input { flex: 1; padding: 15px; background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); font-size: 1rem; transition: all 0.3s; }
         input:focus { outline: none; border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2); }
+        input:disabled { opacity: 0.5; cursor: not-allowed; background-color: #1c2128; }
         button { background-color: var(--accent-color); color: white; border: none; border-radius: 8px; padding: 0 25px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         button:hover { background-color: #2ea043; transform: translateY(-2px); }
         button:active { transform: translateY(0); }
-        button:disabled { background-color: #4a5568; cursor: not-allowed; transform: none; }
+        button:disabled { background-color: #4a5568; cursor: not-allowed; transform: none; opacity: 0.6; }
         .secondary-btn { background-color: #373e47; color: var(--text-color); }
         .secondary-btn:hover { background-color: #444c56; }
         .examples { font-size: 0.9rem; color: #8b949e; margin-top: 10px; }
@@ -31,6 +51,7 @@
         .status.error { background-color: rgba(248, 81, 73, 0.15); border: 1px solid rgba(248, 81, 73, 0.4); color: #f85149; }
         .status.success { background-color: rgba(46, 160, 67, 0.15); border: 1px solid rgba(46, 160, 67, 0.4); color: #2ea043; }
         .status.info { background-color: rgba(88, 166, 255, 0.15); border: 1px solid rgba(88, 166, 255, 0.4); color: #58a6ff; }
+        .status.warning { background-color: rgba(210, 153, 34, 0.15); border: 1px solid rgba(210, 153, 34, 0.4); color: #d29922; }
         .results-section { display: none; }
         .search-section { margin-bottom: 20px; }
         .search-input { width: 100%; }
@@ -54,15 +75,53 @@
         footer { text-align: center; margin-top: 40px; color: #8b949e; font-size: 0.9rem; padding-bottom: 20px; }
         footer a { color: #58a6ff; text-decoration: none; }
         footer a:hover { text-decoration: underline; }
-        @media (max-width: 768px) { .input-group { flex-direction: column; } button { width: 100%; padding: 15px; } .repository-item { flex-direction: column; align-items: flex-start; gap: 10px; } .repo-url { max-width: 100%; } .actions-row { flex-direction: column; } }
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .loading-spinner { text-align: center; color: var(--text-color); }
+        .loading-spinner i { font-size: 3rem; margin-bottom: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media (max-width: 768px) { .input-group { flex-direction: column; } button { width: 100%; padding: 15px; } .repository-item { flex-direction: column; align-items: flex-start; gap: 10px; } .repo-url { max-width: 100%; } .actions-row { flex-direction: column; } .rate-limit-info { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner"></i>
+            <p>Checking API Rate Limit...</p>
+        </div>
+    </div>
+
     <div class="container">
         <header>
             <h1><i class="fab fa-github"></i> xsukax GitHub Repository Fetcher</h1>
             <p class="subtitle">Enter a GitHub username or profile URL to fetch all repository URLs. Download them as a plain text file with a single click.</p>
         </header>
+
+        <div class="rate-limit-card">
+            <div class="rate-limit-header">
+                <h3>
+                    <i class="fas fa-tachometer-alt"></i> API Rate Limit Status
+                </h3>
+                <span class="rate-limit-badge" id="rateLimitBadge">Checking...</span>
+            </div>
+            <div class="rate-limit-info">
+                <div class="rate-limit-stat">
+                    <div class="label">Remaining</div>
+                    <div class="value" id="remainingRequests">--</div>
+                </div>
+                <div class="rate-limit-stat">
+                    <div class="label">Total Limit</div>
+                    <div class="value" id="totalLimit">--</div>
+                </div>
+                <div class="rate-limit-stat">
+                    <div class="label">Used</div>
+                    <div class="value" id="usedRequests">--</div>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="reset-info" id="resetInfo">Rate limit resets at: --</div>
+        </div>
         
         <main class="app-container">
             <div class="input-section">
@@ -110,7 +169,7 @@
         </main>
         
         <footer>
-            <p>This tool uses the official GitHub API. Rate limits may apply for unauthenticated requests.</p>
+            <p>This tool uses the official GitHub API. Unauthenticated requests are limited to 60 per hour.</p>
             <p>Created with <i class="fas fa-heart" style="color: #f85149;"></i> for developers | <a href="https://github.com" target="_blank">GitHub</a></p>
         </footer>
     </div>
@@ -126,9 +185,21 @@
             const downloadButton = document.getElementById('downloadButton');
             const copyButton = document.getElementById('copyButton');
             const searchInput = document.getElementById('searchInput');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            
+            const remainingRequestsEl = document.getElementById('remainingRequests');
+            const totalLimitEl = document.getElementById('totalLimit');
+            const usedRequestsEl = document.getElementById('usedRequests');
+            const rateLimitBadge = document.getElementById('rateLimitBadge');
+            const progressFill = document.getElementById('progressFill');
+            const resetInfo = document.getElementById('resetInfo');
             
             let allRepositories = [];
             let filteredRepositories = [];
+            let rateLimitData = null;
+            
+            // Check rate limit on page load
+            checkRateLimit();
             
             fetchButton.addEventListener('click', fetchRepositories);
             
@@ -156,7 +227,92 @@
                 displayRepositories(filteredRepositories);
             });
             
+            async function checkRateLimit() {
+                loadingOverlay.style.display = 'flex';
+                
+                try {
+                    const response = await fetch('https://api.github.com/rate_limit');
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch rate limit');
+                    }
+                    
+                    const data = await response.json();
+                    rateLimitData = data.resources.core;
+                    
+                    updateRateLimitUI();
+                    
+                    // Check if remaining is 0
+                    if (rateLimitData.remaining === 0) {
+                        disableInput();
+                        showStatus('⚠️ API rate limit exceeded. Please wait until the reset time.', 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error checking rate limit:', error);
+                    showStatus('Failed to check rate limit. You can still try to fetch repositories.', 'warning');
+                } finally {
+                    loadingOverlay.style.display = 'none';
+                }
+            }
+            
+            function updateRateLimitUI() {
+                if (!rateLimitData) return;
+                
+                const remaining = rateLimitData.remaining;
+                const limit = rateLimitData.limit;
+                const used = limit - remaining;
+                const percentage = (remaining / limit) * 100;
+                
+                remainingRequestsEl.textContent = remaining;
+                totalLimitEl.textContent = limit;
+                usedRequestsEl.textContent = used;
+                
+                // Update progress bar
+                progressFill.style.width = percentage + '%';
+                
+                // Update colors based on remaining percentage
+                if (percentage > 50) {
+                    remainingRequestsEl.className = 'value good';
+                    progressFill.className = 'progress-fill';
+                    rateLimitBadge.className = 'rate-limit-badge good';
+                    rateLimitBadge.textContent = 'Healthy';
+                } else if (percentage > 20) {
+                    remainingRequestsEl.className = 'value warning';
+                    progressFill.className = 'progress-fill warning';
+                    rateLimitBadge.className = 'rate-limit-badge warning';
+                    rateLimitBadge.textContent = 'Low';
+                } else {
+                    remainingRequestsEl.className = 'value danger';
+                    progressFill.className = 'progress-fill danger';
+                    rateLimitBadge.className = 'rate-limit-badge danger';
+                    rateLimitBadge.textContent = remaining === 0 ? 'Exhausted' : 'Critical';
+                }
+                
+                // Update reset time
+                const resetDate = new Date(rateLimitData.reset * 1000);
+                resetInfo.textContent = `Rate limit resets at: ${resetDate.toLocaleString()}`;
+            }
+            
+            function disableInput() {
+                githubInput.disabled = true;
+                fetchButton.disabled = true;
+                githubInput.placeholder = 'API rate limit exceeded - input disabled';
+            }
+            
+            function enableInput() {
+                githubInput.disabled = false;
+                fetchButton.disabled = false;
+                githubInput.placeholder = "Enter GitHub username or profile URL (e.g., 'torvalds' or 'https://github.com/torvalds')";
+            }
+            
             async function fetchRepositories() {
+                // Check rate limit before fetching
+                if (rateLimitData && rateLimitData.remaining === 0) {
+                    showStatus('Cannot fetch repositories. API rate limit exceeded. Please wait until the reset time.', 'error');
+                    return;
+                }
+                
                 const input = githubInput.value.trim();
                 
                 if (!input) {
@@ -177,6 +333,9 @@
                 
                 try {
                     const response = await fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated`);
+                    
+                    // Update rate limit after request
+                    await checkRateLimit();
                     
                     if (!response.ok) {
                         if (response.status === 404) {
@@ -208,6 +367,9 @@
                         
                         const additionalRepos = await Promise.all(promises);
                         repos = repos.concat(...additionalRepos);
+                        
+                        // Update rate limit after all requests
+                        await checkRateLimit();
                     }
                     
                     if (repos.length === 0) {
@@ -238,8 +400,11 @@
                     allRepositories = [];
                     filteredRepositories = [];
                     displayRepositories([]);
+                    
+                    // Still update rate limit on error
+                    await checkRateLimit();
                 } finally {
-                    fetchButton.disabled = false;
+                    fetchButton.disabled = rateLimitData && rateLimitData.remaining === 0;
                     fetchButton.innerHTML = '<i class="fas fa-search"></i> Fetch Repositories';
                 }
             }
